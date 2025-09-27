@@ -44,6 +44,10 @@ async def on_ready():
 # Commands
 # -------------------------------------------------------------------
 @bot.command()
+async def hello(ctx):
+    await ctx.send(f"Hello {ctx.author.mention}!")
+
+@bot.command()
 async def add(ctx, champion: str, *, build: str):
     """
     !add ashe mercury trends, void staff
@@ -75,7 +79,7 @@ async def add(ctx, champion: str, *, build: str):
 @bot.command()
 async def get(ctx, champion: str):
     """
-    Retrieve and display item icons for the champion.
+    Retrieve and display item icons for the champion using raw image URLs.
     """
     conn = await asyncpg.connect(DATABASE_URL)
     rows = await conn.fetch(
@@ -92,20 +96,19 @@ async def get(ctx, champion: str):
         item_ids = r["item_ids"].split(",")
         author = r["author"]
 
-        # Build the embed with icons
-        embed = discord.Embed(
-            title=f"Build for {champion.title()}",
-            description=f"Submitted by {author}",
-            color=discord.Color.blue()
-        )
-        # Add each icon as a field with a blank name to keep them inline
-        for item_id in item_ids:
-            icon_url = f"https://ddragon.leagueoflegends.com/cdn/14.18.1/img/item/{item_id}.png"
-            embed.set_thumbnail(url=icon_url)  # One thumbnail per embed
-            # OR if you prefer multiple icons inline, you can use embed.add_field
-            # embed.add_field(name="\u200b", value=f"[⠀]({icon_url})") 
+        icon_urls = [
+            f"https://ddragon.leagueoflegends.com/cdn/14.18.1/img/item/{item_id.strip()}.png"
+            for item_id in item_ids
+        ]
 
-        await ctx.send(embed=embed)
+        # Send a single message with all image URLs (Discord will auto-embed)
+        message = (
+            f"**Build for {champion.title()}**\n"
+            f"Submitted by `{author}`:\n\n" +
+            "\n".join(icon_urls)
+        )
+
+        await ctx.send(message)
 
 @bot.command()
 async def delete(ctx, champion: str):
