@@ -98,7 +98,7 @@ async def get(ctx, champion: str):
         author = r["author"]
 
         icon_urls = [
-            f"https://ddragon.leagueoflegends.com/cdn/14.18.1/img/item/{item_id.strip()}.png"
+            f"https://ddragon.leagueoflegends.com/cdn/15.19.1/img/item/{item_id.strip()}.png"
             for item_id in item_ids
         ]
 
@@ -131,3 +131,4 @@ if __name__ == "__main__":
     if not TOKEN or not DATABASE_URL:
         raise RuntimeError("Missing DISCORD_TOKEN or DATABASE_URL")
     bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
+
