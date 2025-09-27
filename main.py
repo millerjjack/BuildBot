@@ -50,10 +50,11 @@ async def hello(ctx):
 @bot.command()
 async def add(ctx, champion: str, *, build: str):
     """
-    !add ashe mercury trends, void staff
-    -> stores "3111,3135"
+    Add a build for a champion using comma-separated item names.
+    Example: !add zoe sorcerer's boots, void staff, deathcap, lich bane, hourglass
     """
-    tokens = [token.strip(" ,") for token in build.split()]
+    # Split input by commas to support multi-word item names
+    tokens = [token.strip().lower() for token in build.split(",")]
     matched_ids = []
 
     for token in tokens:
