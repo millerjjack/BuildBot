@@ -45,7 +45,22 @@ async def on_ready():
 # -------------------------------------------------------------------
 @bot.command()
 async def hello(ctx):
-    await ctx.send(f"Hello {ctx.author.mention}!")
+    await ctx.send(f"Hey bitch {ctx.author.mention}!")
+
+@bot.command()
+async def meme(ctx):
+    url = "https://meme-api.com/gimme"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                meme_url = data.get("url")
+                meme_title = data.get("title", "Here's your meme!")
+                embed = discord.Embed(title=meme_title)
+                embed.set_image(url=meme_url)
+                await ctx.send(embed=embed)
+            else:
+                await ctx.send("Sorry, I couldn't fetch a meme right now!")
 
 @bot.command()
 async def add(ctx, champion: str, *, build: str):
@@ -131,4 +146,5 @@ if __name__ == "__main__":
     if not TOKEN or not DATABASE_URL:
         raise RuntimeError("Missing DISCORD_TOKEN or DATABASE_URL")
     bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
+
 
