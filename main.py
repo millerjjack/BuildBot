@@ -49,16 +49,17 @@ async def hello(ctx):
 
 @bot.command()
 async def meme(ctx):
-    url = "https://meme-api.com/gimme"
+    """Fetch a random meme and send only the direct image URL."""
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
+        async with session.get("https://meme-api.com/gimme") as resp:
             if resp.status == 200:
                 data = await resp.json()
+                # Grab the raw value of the 'url' key
                 meme_url = data.get("url")
-                meme_title = data.get("title", "Here's your meme!")
-                embed = discord.Embed(title=meme_title)
-                embed.set_image(url=meme_url)
-                await ctx.send(embed=embed)
+                if meme_url:
+                    await ctx.send(meme_url)   # <-- sends only the URL text
+                else:
+                    await ctx.send("No meme URL found.")
             else:
                 await ctx.send("Sorry, I couldn't fetch a meme right now!")
 
@@ -146,5 +147,6 @@ if __name__ == "__main__":
     if not TOKEN or not DATABASE_URL:
         raise RuntimeError("Missing DISCORD_TOKEN or DATABASE_URL")
     bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
+
 
 
