@@ -1,6 +1,7 @@
 import os
 import logging
 import asyncpg
+import aiohttp
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -49,19 +50,19 @@ async def hello(ctx):
 
 @bot.command()
 async def meme(ctx):
-    """Fetch a random meme and send only the direct image URL."""
+    """Fetch a meme and send just the image URL."""
     async with aiohttp.ClientSession() as session:
         async with session.get("https://meme-api.com/gimme") as resp:
             if resp.status == 200:
                 data = await resp.json()
-                # Grab the raw value of the 'url' key
                 meme_url = data.get("url")
                 if meme_url:
-                    await ctx.send(meme_url)   # <-- sends only the URL text
+                    await ctx.send(meme_url)  # <- send only the raw URL
                 else:
-                    await ctx.send("No meme URL found.")
+                    await ctx.send("⚠️ No meme URL found in response.")
             else:
-                await ctx.send("Sorry, I couldn't fetch a meme right now!")
+                await ctx.send("⚠️ Failed to fetch a meme.")
+
 
 @bot.command()
 async def add(ctx, champion: str, *, build: str):
@@ -147,6 +148,7 @@ if __name__ == "__main__":
     if not TOKEN or not DATABASE_URL:
         raise RuntimeError("Missing DISCORD_TOKEN or DATABASE_URL")
     bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
+
 
 
 
