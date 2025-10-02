@@ -49,6 +49,36 @@ async def hello(ctx):
     await ctx.send(f"Hey bitch {ctx.author.mention}!")
 
 @bot.command()
+async def crypto(ctx):
+    """Fetch global cryptocurrency market stats from CoinGecko."""
+    url = "https://api.coingecko.com/api/v3/global"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                market_data = data.get("data", {})
+
+                # Extract useful info
+                total_market_cap = market_data.get("total_market_cap", {}).get("usd", 0)
+                total_volume = market_data.get("total_volume", {}).get("usd", 0)
+                btc_dominance = market_data.get("market_cap_percentage", {}).get("btc", 0)
+                eth_dominance = market_data.get("market_cap_percentage", {}).get("eth", 0)
+                active_cryptos = market_data.get("active_cryptocurrencies", 0)
+
+                # Format nicely
+                msg = (
+                    f"🌐 **Global Crypto Market Stats** 🌐\n"
+                    f"💰 Total Market Cap: ${total_market_cap:,.0f}\n"
+                    f"📊 24h Volume: ${total_volume:,.0f}\n"
+                    f"🪙 BTC Dominance: {btc_dominance:.2f}% | ETH: {eth_dominance:.2f}%\n"
+                    f"🔢 Active Cryptocurrencies: {active_cryptos}"
+                )
+
+                await ctx.send(msg)
+            else:
+                await ctx.send("⚠️ Failed to fetch crypto stats.")
+
+@bot.command()
 async def meme(ctx):
     """Fetch a meme and send just the image URL."""
     async with aiohttp.ClientSession() as session:
@@ -148,6 +178,7 @@ if __name__ == "__main__":
     if not TOKEN or not DATABASE_URL:
         raise RuntimeError("Missing DISCORD_TOKEN or DATABASE_URL")
     bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
+
 
 
 
