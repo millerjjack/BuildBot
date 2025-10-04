@@ -3,4 +3,3 @@ python-dotenv
 asyncpg
 rapidfuzz
 aiohttp
-random
