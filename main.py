@@ -80,28 +80,27 @@ async def crypto(ctx):
 
 @bot.command()
 async def meme(ctx):
-    """Fetch a meme from r/darkmemers."""
-    url = "https://www.reddit.com/r/darkmemers/top.json?limit=50&t=day"
-    headers = {"User-Agent": "DiscordBot/1.0"}  # Reddit requires UA header
+    """Fetch a meme from r/darkmemers and send the image URL."""
+    url = "https://www.reddit.com/r/darkmemers/hot.json?limit=50"
+    headers = {"User-Agent": "discord-bot/0.1 by yourusername"}
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as resp:
             if resp.status == 200:
                 data = await resp.json()
-                posts = data["data"]["children"]
-
-                # Filter only image posts
-                image_posts = [
-                    post["data"]["url"] for post in posts
-                    if post["data"]["url"].endswith((".jpg", ".png", ".gif"))
-                ]
-
-                if not image_posts:
-                    await ctx.send("⚠️ Couldn't find image posts right now.")
+                posts = data.get("data", {}).get("children", [])
+                if not posts:
+                    await ctx.send("⚠️ No memes found.")
                     return
 
-                meme_url = random.choice(image_posts)  # Pick one randomly
-                await ctx.send(meme_url)
+                # Pick a random post
+                post = random.choice(posts)["data"]
+                meme_url = post.get("url_overridden_by_dest")
+
+                if meme_url and (meme_url.endswith(".jpg") or meme_url.endswith(".png") or meme_url.endswith(".gif")):
+                    await ctx.send(meme_url)
+                else:
+                    await ctx.send("⚠️ Couldn't find a valid meme image.")
             else:
                 await ctx.send("⚠️ Failed to fetch memes from Reddit.")
 
@@ -190,6 +189,7 @@ if __name__ == "__main__":
     if not TOKEN or not DATABASE_URL:
         raise RuntimeError("Missing DISCORD_TOKEN or DATABASE_URL")
     bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
+
 
 
 
