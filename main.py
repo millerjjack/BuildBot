@@ -80,18 +80,30 @@ async def crypto(ctx):
 
 @bot.command()
 async def meme(ctx):
-    """Fetch a meme and send just the image URL."""
+    """Fetch a meme from r/darkmemers."""
+    url = "https://www.reddit.com/r/darkmemers/top.json?limit=50&t=day"
+    headers = {"User-Agent": "DiscordBot/1.0"}  # Reddit requires UA header
+
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://meme-api.com/gimme") as resp:
+        async with session.get(url, headers=headers) as resp:
             if resp.status == 200:
                 data = await resp.json()
-                meme_url = data.get("url")
-                if meme_url:
-                    await ctx.send(meme_url)  # <- send only the raw URL
-                else:
-                    await ctx.send("⚠️ No meme URL found in response.")
+                posts = data["data"]["children"]
+
+                # Filter only image posts
+                image_posts = [
+                    post["data"]["url"] for post in posts
+                    if post["data"]["url"].endswith((".jpg", ".png", ".gif"))
+                ]
+
+                if not image_posts:
+                    await ctx.send("⚠️ Couldn't find image posts right now.")
+                    return
+
+                meme_url = random.choice(image_posts)  # Pick one randomly
+                await ctx.send(meme_url)
             else:
-                await ctx.send("⚠️ Failed to fetch a meme.")
+                await ctx.send("⚠️ Failed to fetch memes from Reddit.")
 
 
 @bot.command()
@@ -178,6 +190,7 @@ if __name__ == "__main__":
     if not TOKEN or not DATABASE_URL:
         raise RuntimeError("Missing DISCORD_TOKEN or DATABASE_URL")
     bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
+
 
 
 
