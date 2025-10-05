@@ -50,60 +50,43 @@ async def hello(ctx):
     await ctx.send(f"Hey bitch {ctx.author.mention}!")
 
 @bot.command()
-async def crypto(ctx):
-    """Fetch global cryptocurrency market stats from CoinGecko."""
-    url = "https://api.coingecko.com/api/v3/global"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            if resp.status == 200:
-                data = await resp.json()
-                market_data = data.get("data", {})
-
-                # Extract useful info
-                total_market_cap = market_data.get("total_market_cap", {}).get("usd", 0)
-                total_volume = market_data.get("total_volume", {}).get("usd", 0)
-                btc_dominance = market_data.get("market_cap_percentage", {}).get("btc", 0)
-                eth_dominance = market_data.get("market_cap_percentage", {}).get("eth", 0)
-                active_cryptos = market_data.get("active_cryptocurrencies", 0)
-
-                # Format nicely
-                msg = (
-                    f"🌐 **Global Crypto Market Stats** 🌐\n"
-                    f"💰 Total Market Cap: ${total_market_cap:,.0f}\n"
-                    f"📊 24h Volume: ${total_volume:,.0f}\n"
-                    f"🪙 BTC Dominance: {btc_dominance:.2f}% | ETH: {eth_dominance:.2f}%\n"
-                    f"🔢 Active Cryptocurrencies: {active_cryptos}"
-                )
-
-                await ctx.send(msg)
-            else:
-                await ctx.send("⚠️ Failed to fetch crypto stats.")
-
-@bot.command()
 async def meme(ctx):
     """Fetch a meme from r/darkmemers and send the image URL."""
-    url = "https://www.reddit.com/r/darkmemers/hot.json?limit=50"
-    headers = {"User-Agent": "discord-bot/0.1 by yourusername"}
+    url = "https://www.reddit.com/r/darkmemers/top/.json?limit=50&t=week"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; DiscordBot/1.0; +https://github.com/yourusername)"
+    }
 
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers) as resp:
-            if resp.status == 200:
+        try:
+            async with session.get(url, headers=headers, ssl=False) as resp:
+                if resp.status != 200:
+                    await ctx.send(f"⚠️ Reddit returned status {resp.status}")
+                    return
+
                 data = await resp.json()
                 posts = data.get("data", {}).get("children", [])
                 if not posts:
                     await ctx.send("⚠️ No memes found.")
                     return
 
-                # Pick a random post
-                post = random.choice(posts)["data"]
-                meme_url = post.get("url_overridden_by_dest")
+                # Pick a random post that has a valid image
+                valid_posts = [
+                    p["data"]
+                    for p in posts
+                    if p["data"].get("url_overridden_by_dest", "").endswith((".jpg", ".png", ".gif"))
+                ]
+                if not valid_posts:
+                    await ctx.send("⚠️ No image posts found.")
+                    return
 
-                if meme_url and (meme_url.endswith(".jpg") or meme_url.endswith(".png") or meme_url.endswith(".gif")):
-                    await ctx.send(meme_url)
-                else:
-                    await ctx.send("⚠️ Couldn't find a valid meme image.")
-            else:
-                await ctx.send("⚠️ Failed to fetch memes from Reddit.")
+                post = random.choice(valid_posts)
+                meme_url = post["url_overridden_by_dest"]
+                title = post.get("title", "Meme")
+                await ctx.send(f"**{title}**\n{meme_url}")
+
+        except Exception as e:
+            await ctx.send(f"⚠️ Error: {e}")
 
 
 @bot.command()
@@ -190,6 +173,7 @@ if __name__ == "__main__":
     if not TOKEN or not DATABASE_URL:
         raise RuntimeError("Missing DISCORD_TOKEN or DATABASE_URL")
     bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
+
 
 
 
