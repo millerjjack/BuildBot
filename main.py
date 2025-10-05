@@ -49,44 +49,53 @@ async def on_ready():
 async def hello(ctx):
     await ctx.send(f"Hey bitch {ctx.author.mention}!")
 
-@bot.command()
+import aiohttp
+import random
+from discord.ext import commands
+
+@commands.command()
 async def meme(ctx):
-    """Fetch a meme from r/darkmemers and send the image URL."""
-    url = "https://www.reddit.com/r/darkmemers/top/.json?limit=50&t=week"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; DiscordBot/1.0; +https://github.com/yourusername)"
-    }
+    """Fetch a meme from a random subreddit and send just the image URL."""
+    subreddits = [
+        "memes",
+        "funny",
+        "dankmemes",
+        "darkmemers",
+        "me_irl",
+        "wholesomememes",
+        "terriblefacebookmemes",
+        "okbuddyretard",
+        "comedyheaven",
+        "shitposting",
+    ]
+
+    subreddit = random.choice(subreddits)
+    url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit=50"
+    headers = {"User-Agent": "Mozilla/5.0 (DiscordBot/1.0 by u/YourRedditUsername)"}
 
     async with aiohttp.ClientSession() as session:
-        try:
-            async with session.get(url, headers=headers, ssl=False) as resp:
-                if resp.status != 200:
-                    await ctx.send(f"⚠️ Reddit returned status {resp.status}")
-                    return
-
+        async with session.get(url, headers=headers) as resp:
+            if resp.status == 200:
                 data = await resp.json()
                 posts = data.get("data", {}).get("children", [])
                 if not posts:
-                    await ctx.send("⚠️ No memes found.")
+                    await ctx.send(f"⚠️ No posts found in r/{subreddit}.")
                     return
 
-                # Pick a random post that has a valid image
                 valid_posts = [
-                    p["data"]
+                    p["data"]["url"]
                     for p in posts
-                    if p["data"].get("url_overridden_by_dest", "").endswith((".jpg", ".png", ".gif"))
+                    if not p["data"].get("over_18") and p["data"].get("post_hint") == "image"
                 ]
+
                 if not valid_posts:
-                    await ctx.send("⚠️ No image posts found.")
+                    await ctx.send(f"⚠️ No suitable memes found in r/{subreddit}.")
                     return
 
-                post = random.choice(valid_posts)
-                meme_url = post["url_overridden_by_dest"]
-                title = post.get("title", "Meme")
-                await ctx.send(f"**{title}**\n{meme_url}")
-
-        except Exception as e:
-            await ctx.send(f"⚠️ Error: {e}")
+                meme_url = random.choice(valid_posts)
+                await ctx.send(f"From r/{subreddit}:\n{meme_url}")
+            else:
+                await ctx.send(f"⚠️ Reddit returned status {resp.status} for r/{subreddit}.")
 
 
 @bot.command()
@@ -173,6 +182,7 @@ if __name__ == "__main__":
     if not TOKEN or not DATABASE_URL:
         raise RuntimeError("Missing DISCORD_TOKEN or DATABASE_URL")
     bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
+
 
 
 
