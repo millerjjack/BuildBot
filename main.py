@@ -3,6 +3,7 @@ import logging
 import asyncpg
 import aiohttp
 import discord
+import random
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -189,6 +190,7 @@ if __name__ == "__main__":
     if not TOKEN or not DATABASE_URL:
         raise RuntimeError("Missing DISCORD_TOKEN or DATABASE_URL")
     bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
+
 
 
 
