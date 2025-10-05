@@ -53,7 +53,7 @@ import aiohttp
 import random
 from discord.ext import commands
 
-@commands.command()
+@bot.command()
 async def meme(ctx):
     """Fetch a meme from a random subreddit and send just the image URL."""
     subreddits = [
@@ -182,6 +182,7 @@ if __name__ == "__main__":
     if not TOKEN or not DATABASE_URL:
         raise RuntimeError("Missing DISCORD_TOKEN or DATABASE_URL")
     bot.run(TOKEN, log_handler=handler, log_level=logging.DEBUG)
+
 
 
 
